@@ -5,11 +5,12 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "decrypt:backup": "node scripts/decrypt-submissions.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ZJUNIOUR/frc11353.git"
+    "url": "git+https://github.com/ZJUNIOUR/Visionary-Sparks.git"
   },
   "keywords": [],
   "author": "Zabdiel Dewar",
@@ -18,9 +19,9 @@
     "node": ">=18"
   },
   "bugs": {
-    "url": "https://github.com/ZJUNIOUR/frc11353/issues"
+    "url": "https://github.com/ZJUNIOUR/Visionary-Sparks/issues"
   },
-  "homepage": "https://github.com/ZJUNIOUR/frc11353#readme",
+  "homepage": "https://github.com/ZJUNIOUR/Visionary-Sparks#readme",
   "dependencies": {
     "axios": "^1.15.2",
     "compression": "^1.8.1",

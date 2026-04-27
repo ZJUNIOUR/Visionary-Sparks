@@ -79,6 +79,7 @@
             <form class="contact-form" id="contact-form" action="/api/contact" method="post" novalidate>
               <input class="visually-hidden" type="text" id="website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" aria-label="Leave this field empty" />
               <input type="hidden" id="hcaptcha-token" name="hcaptchaToken" value="" />
+              <input type="hidden" id="legal-version" name="legalVersion" value="2026-04-27" />
 
               <div class="form-row">
                 <div class="form-group">
@@ -119,6 +120,19 @@
                 <p class="captcha-help" id="captcha-help">Loading hCaptcha protection...</p>
               </div>
 
+              <div class="legal-warning" role="note" aria-label="Contact form legal notice">
+                <p>This form is for general questions only. Do not submit Social Security numbers, student identification numbers, grades, disciplinary records, health or disability information, financial account numbers, or other confidential records through this website.</p>
+                <p>If you are under 13, please ask a parent, guardian, teacher, or school representative to help with any personal-information submission.</p>
+                <p>If this website is operated in connection with Halifax County Early College High School or Halifax County oversight, your submission, related emails, and related logs may be retained or disclosed if required by applicable law, public-records obligations, court order, or approved records-retention schedules.</p>
+              </div>
+
+              <div class="form-check">
+                <input type="checkbox" id="terms-accepted" name="termsAccepted" required />
+                <label class="check-label" for="terms-accepted">I have read and agree to the <a class="inline-link" href="terms.html">Terms of Use</a> and <a class="inline-link" href="privacy.html">Privacy Policy</a>, and if I am under 13, a parent, guardian, teacher, or authorized school representative is involved in this submission.</label>
+              </div>
+
+              <p class="form-disclaimer">This site is protected by <a class="inline-link" href="https://www.hcaptcha.com/privacy" target="_blank" rel="noopener noreferrer">hCaptcha Privacy Policy</a> and <a class="inline-link" href="https://www.hcaptcha.com/terms" target="_blank" rel="noopener noreferrer">hCaptcha Terms of Service</a>.</p>
+              <p class="form-disclaimer form-support-note">If you cannot complete the security check, email <a class="inline-link" href="mailto:visionarysparksofficial@gmail.com">visionarysparksofficial@gmail.com</a> or call Halifax County Early College High School at <a class="inline-link" href="tel:+12525365461">(252) 536-5461</a>.</p>
               <button type="submit" class="btn btn-primary btn-full">Send Message</button>
               <div class="form-notice" id="form-notice" role="status" aria-live="polite"></div>
             </form>
@@ -128,9 +142,10 @@
             <div class="contact-info reveal">
               <h3>Quick Info</h3>
               <ul class="contact-details">
-                <li><span class="list-badge">1</span><span>Halifax County, North Carolina, USA</span></li>
-                <li><span class="list-badge">2</span><a href="mailto:visionarysparksofficial@gmail.com?subject=Visionary%20Sparks%20Website%20Inquiry">visionarysparksofficial@gmail.com</a></li>
-                <li><span class="list-badge">3</span><span>Build season runs from January through March.</span></li>
+                <li><span class="list-badge">1</span><span>School-affiliated team at Halifax County Early College High School.</span></li>
+                <li><span class="list-badge">2</span><span>100 College Drive, PO Drawer 809, Weldon, NC 27890</span></li>
+                <li><span class="list-badge">3</span><a href="mailto:visionarysparksofficial@gmail.com">visionarysparksofficial@gmail.com</a></li>
+                <li><span class="list-badge">4</span><a href="tel:+12525365461">(252) 536-5461</a></li>
               </ul>
             </div>
 
@@ -162,7 +177,9 @@
           <img class="logo-mark footer-logo-mark" src="assets/logos/visionary-sparks-logo.png" alt="Visionary Sparks logo" loading="lazy" width="1024" height="1024" decoding="async" />
           <span class="logo-text">Visionary Sparks <em>11353</em></span>
         </a>
-        <p>Inspiring the next generation of engineers and innovators through competitive robotics, mentorship, and community STEM outreach.</p>
+        <p>School-affiliated robotics team at Halifax County Early College High School, building future engineers through FIRST Robotics Competition, mentorship, and community STEM outreach.</p>
+        <p class="footer-meta-line">Halifax County Early College High School | 100 College Drive, PO Drawer 809, Weldon, NC 27890 | (252) 536-5461</p>
+        <p class="footer-meta-line"><a href="mailto:visionarysparksofficial@gmail.com">visionarysparksofficial@gmail.com</a></p>
       </div>
       <nav class="footer-nav" aria-label="Footer navigation">
         <div class="footer-col">
@@ -171,6 +188,7 @@
           <a href="about.html">About</a>
           <a href="robots.html">Robots</a>
           <a href="sponsors.html">Sponsors</a>
+          <a href="contact.html">Contact</a>
         </div>
         <div class="footer-col">
           <h4>Links</h4>
@@ -178,10 +196,16 @@
           <a href="https://www.firstinspires.org" target="_blank" rel="noopener noreferrer">FIRST Inspires</a>
           <a href="https://www.instagram.com/visionary_sparks_official/" target="_blank" rel="noopener noreferrer">Instagram</a>
         </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms of Use</a>
+          <a href="accessibility.html">Accessibility</a>
+        </div>
       </nav>
     </div>
     <div class="footer-bottom">
-      <p>&copy; <span id="footer-year">2026</span> Visionary Sparks | FRC Team 11353</p>
+      <p>&copy; <span id="footer-year">2026</span> Visionary Sparks | FRC Team 11353. All rights reserved.</p>
       <p>Built by Zabdiel Dewar</p>
     </div>
   </footer>

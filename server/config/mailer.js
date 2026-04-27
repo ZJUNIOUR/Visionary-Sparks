@@ -2,7 +2,7 @@
 
 const nodemailer = require('nodemailer');
 
-const { DEFAULT_TEAM_INBOX, env, isPlaceholderValue } = require('./env');
+const { env, isPlaceholderValue } = require('./env');
 const { AppError } = require('../utils/errors');
 
 let transporter;
@@ -11,13 +11,13 @@ function getMailerConfig() {
   // Never commit .env. If the Gmail App Password is ever exposed, rotate it immediately.
   const user = cleanEnvValue(env.EMAIL_USER);
   const pass = cleanEnvValue(env.EMAIL_PASS);
-  const to = cleanEnvValue(env.EMAIL_TO) || DEFAULT_TEAM_INBOX;
+  const to = cleanEnvValue(env.EMAIL_TO);
 
   return {
     user,
     pass,
     to,
-    isConfigured: !isPlaceholderValue(user) && !isPlaceholderValue(pass)
+    isConfigured: !isPlaceholderValue(user) && !isPlaceholderValue(pass) && !isPlaceholderValue(to)
   };
 }
 
@@ -25,7 +25,7 @@ function getTransporter() {
   const config = getMailerConfig();
 
   if (!config.isConfigured) {
-    console.error('Email delivery requested before EMAIL_USER/EMAIL_PASS were configured.');
+    console.error('Email delivery requested before EMAIL_USER/EMAIL_PASS/EMAIL_TO were configured.');
     throw AppError.misconfigured('Email service is temporarily unavailable.');
   }
 
@@ -105,7 +105,6 @@ function buildConfirmationMail({ senderName, email, subject, message }) {
   const config = getMailerConfig();
   const safeName = escapeHtml(senderName);
   const safeSubject = escapeHtml(subject);
-  const safeMessage = escapeHtml(message).replace(/\n/g, '<br />');
 
   return {
     from: `"Visionary Sparks" <${config.user}>`,
@@ -121,8 +120,6 @@ function buildConfirmationMail({ senderName, email, subject, message }) {
       'Submission summary',
       `Name: ${senderName}`,
       `Subject: ${subject}`,
-      'Message:',
-      message,
       '',
       'We appreciate your interest in Visionary Sparks.',
       '',
@@ -136,8 +133,6 @@ function buildConfirmationMail({ senderName, email, subject, message }) {
         <div style="margin: 1.5rem 0; padding: 1rem 1.25rem; border: 1px solid #d8e3f2; border-radius: 12px; background: #f7fbff;">
           <p style="margin: 0 0 0.5rem;"><strong>Name:</strong> ${safeName}</p>
           <p style="margin: 0 0 0.5rem;"><strong>Subject:</strong> ${safeSubject}</p>
-          <p style="margin: 0 0 0.5rem;"><strong>Message:</strong></p>
-          <p style="margin: 0;">${safeMessage}</p>
         </div>
         <p>We appreciate your interest in Visionary Sparks.</p>
         <p style="margin-bottom: 0;">Visionary Sparks | FRC Team 11353</p>

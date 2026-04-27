@@ -2,6 +2,7 @@
 
 const { body, matchedData, validationResult } = require('express-validator');
 
+const LEGAL_NOTICE_VERSION = '2026-04-27';
 const SUBJECT_LABELS = {
   join: 'Join the Team',
   sponsor: 'Sponsorship Inquiry',
@@ -68,6 +69,14 @@ const contactValidationRules = [
     .trim()
     .isLength({ min: 10, max: 1000 })
     .withMessage('Message must be between 10 and 1000 characters.'),
+  body('termsAccepted')
+    .custom((value) => isAcceptedValue(value))
+    .withMessage('You must agree to the Terms of Use and Privacy Policy before submitting the form.'),
+  body('legalVersion')
+    .optional({ values: 'falsy' })
+    .trim()
+    .custom((value) => value === LEGAL_NOTICE_VERSION)
+    .withMessage('Please refresh the page and review the latest legal notice before submitting.'),
   body('hcaptchaToken')
     .exists({ checkFalsy: true })
     .withMessage('Please complete the hCaptcha challenge.')
@@ -108,6 +117,8 @@ function getValidatedContactPayload(req) {
     email: cleanString(data.email),
     subject: normalizeSubjectKey(data.subject),
     message: cleanString(data.message),
+    termsAccepted: isAcceptedValue(data.termsAccepted),
+    legalVersion: LEGAL_NOTICE_VERSION,
     hcaptchaToken: cleanString(data.hcaptchaToken),
     website: cleanString(data.website)
   };
@@ -126,6 +137,8 @@ function buildContactLogPreview(body = {}) {
     email: cleanString(body.email).toLowerCase(),
     subject: normalizeSubjectKey(body.subject),
     message: cleanString(body.message),
+    termsAccepted: isAcceptedValue(body.termsAccepted),
+    legalVersion: LEGAL_NOTICE_VERSION,
     website: cleanString(body.website)
   });
 }
@@ -137,6 +150,8 @@ function sanitizeContactPayload(payload) {
     email: escapeHtml(cleanString(payload.email)),
     subject: normalizeSubjectKey(payload.subject),
     message: escapeHtml(cleanString(payload.message)),
+    termsAccepted: Boolean(payload.termsAccepted),
+    legalVersion: escapeHtml(cleanString(payload.legalVersion || '')),
     website: escapeHtml(cleanString(payload.website || ''))
   };
 }
@@ -150,6 +165,10 @@ function cleanString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function isAcceptedValue(value) {
+  return value === true || value === 'true' || value === 'on' || value === '1' || value === 1;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -160,6 +179,7 @@ function escapeHtml(value) {
 }
 
 module.exports = {
+  LEGAL_NOTICE_VERSION,
   SUBJECT_LABELS,
   buildContactLogPreview,
   contactValidationRules,

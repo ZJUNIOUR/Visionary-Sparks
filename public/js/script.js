@@ -1,6 +1,9 @@
 'use strict';
 
 const CONTACT_API_ENDPOINT = '/api/contact';
+const FORM_SUPPORT_EMAIL = 'visionarysparksofficial@gmail.com';
+const FORM_SUPPORT_PHONE = '(252) 536-5461';
+const FORM_SUPPORT_MESSAGE = `If you cannot complete the security check, email ${FORM_SUPPORT_EMAIL} or call Halifax County Early College High School at ${FORM_SUPPORT_PHONE}.`;
 
 function ready(callback) {
   if (document.readyState === 'loading') {
@@ -249,6 +252,8 @@ function initContactForm() {
   const captchaContainer = document.getElementById('hcaptcha-container');
   const captchaHelp = document.getElementById('captcha-help');
   const captchaTokenInput = document.getElementById('hcaptcha-token');
+  const legalVersionInput = document.getElementById('legal-version');
+  const termsAcceptedInput = document.getElementById('terms-accepted');
   const defaultLabel = submitButton ? submitButton.textContent : 'Send Message';
   const endpoint = form.getAttribute('action') || CONTACT_API_ENDPOINT;
   const captchaState = {
@@ -273,7 +278,7 @@ function initContactForm() {
       showNotice(
         notice,
         'error',
-        'Security protection is not ready yet. Please complete the hCaptcha setup and try again.'
+        `Security protection is not ready yet. ${FORM_SUPPORT_MESSAGE}`
       );
       return;
     }
@@ -296,7 +301,9 @@ function initContactForm() {
       subject: form.subject.value.trim(),
       message: form.message.value.trim(),
       website: form.website.value.trim(),
-      hcaptchaToken
+      hcaptchaToken,
+      termsAccepted: Boolean(termsAcceptedInput && termsAcceptedInput.checked),
+      legalVersion: legalVersionInput ? legalVersionInput.value.trim() : ''
     };
 
     const validationError = validateContactPayload(payload);
@@ -352,7 +359,7 @@ function initContactForm() {
   });
 }
 
-function validateContactPayload({ fname, lname, email, subject, message }) {
+function validateContactPayload({ fname, lname, email, subject, message, termsAccepted }) {
   if (!fname || !lname) {
     return 'Please enter your first and last name.';
   }
@@ -371,6 +378,10 @@ function validateContactPayload({ fname, lname, email, subject, message }) {
 
   if (message.length > 1000) {
     return 'Please keep your message under 1000 characters.';
+  }
+
+  if (!termsAccepted) {
+    return 'Please agree to the Terms of Use and Privacy Policy before sending your message.';
   }
 
   return '';
@@ -392,7 +403,7 @@ async function initCaptchaProtection(state, container, helpText, submitButton, h
 
   if (!config.hcaptchaConfigured || !config.hcaptchaSiteKey) {
     helpText.textContent =
-      'Security verification is temporarily unavailable. Please try again later.';
+      `Security verification is temporarily unavailable. ${FORM_SUPPORT_MESSAGE}`;
     submitButton.disabled = true;
     return;
   }

@@ -6,12 +6,17 @@ const path = require('path');
 
 const LOG_FILE = path.join(__dirname, '..', 'logs', 'contact.log');
 
-async function logContactSubmission({ fname, lname, email, subject }) {
-  const entry = `[${formatTimestamp(new Date())}] ${formatName(fname, lname)} | ${hashEmail(
-    email
-  )} | ${subject}`;
+async function logContactSubmission({ email, ip, subject, outcome, termsAccepted, legalVersion }) {
+  const entry = [
+    `[${formatTimestamp(new Date())}]`,
+    `outcome:${cleanField(outcome) || 'accepted'}`,
+    `email:${hashIdentifier(email)}`,
+    `ip:${hashIdentifier(ip)}`,
+    `subject:${cleanField(subject) || 'other'}`,
+    `assent:${termsAccepted ? 'yes' : 'no'}${legalVersion ? `:${cleanField(legalVersion)}` : ''}`
+  ].join(' | ');
 
-  console.log(entry);
+  console.info(entry);
   await ensureFile(LOG_FILE, '');
   await fs.appendFile(LOG_FILE, `${entry}\n`, {
     encoding: 'utf8',
@@ -38,11 +43,6 @@ async function ensureFile(filePath, defaultContents) {
   }
 }
 
-function formatName(fname, lname) {
-  const fullName = `${fname} ${lname}`.trim();
-  return fullName || 'Unknown Sender';
-}
-
 function formatTimestamp(date) {
   const year = date.getFullYear();
   const month = pad(date.getMonth() + 1);
@@ -58,18 +58,22 @@ function pad(value) {
   return String(value).padStart(2, '0');
 }
 
-function hashEmail(email) {
-  // Logs intentionally keep only a one-way hash so operators can correlate abuse
-  // without retaining raw email addresses in plaintext log files.
+function hashIdentifier(value) {
+  // Operational logs intentionally keep only one-way hashes so operators can
+  // correlate abuse and delivery events without retaining plaintext identifiers.
   return crypto
     .createHash('sha256')
-    .update(String(email).trim().toLowerCase())
+    .update(String(value || '').trim().toLowerCase())
     .digest('hex');
+}
+
+function cleanField(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
 module.exports = {
   LOG_FILE,
   formatTimestamp,
-  hashEmail,
+  hashIdentifier,
   logContactSubmission
 };

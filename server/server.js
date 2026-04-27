@@ -125,10 +125,12 @@ function startServer(port = env.PORT) {
   const captchaConfig = getCaptchaConfig();
 
   return app.listen(port, () => {
-    console.log(`Visionary Sparks server listening on http://localhost:${port}`);
+    console.log(
+      `Visionary Sparks server listening on port ${port} (canonical origin: ${env.APP_ORIGIN})`
+    );
     if (!mailerConfig.isConfigured) {
       console.warn(
-        'Contact email is not fully configured. Set EMAIL_USER and EMAIL_PASS in .env with a valid Gmail account and App Password before deploying.'
+        'Contact email is not fully configured. Set EMAIL_USER, EMAIL_PASS, and a school-controlled EMAIL_TO inbox before deploying.'
       );
     }
     if (!captchaConfig.isConfigured) {
@@ -163,7 +165,7 @@ function redirectHttpToHttps(req, res, next) {
     return next();
   }
 
-  return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+  return res.redirect(301, new URL(req.originalUrl, env.APP_ORIGIN).toString());
 }
 
 function isLocalRequest(req) {

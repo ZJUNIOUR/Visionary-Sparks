@@ -45,7 +45,7 @@ router.post(
       });
     }
 
-    const { errors, payload, sanitizedPayload } = getValidatedContactPayload(req);
+    const { errors, payload } = getValidatedContactPayload(req);
 
     if (errors.length) {
       const validationError = AppError.validation(errors);
@@ -62,7 +62,7 @@ router.post(
     });
 
     if (
-      hasRecentDuplicateSubmission({
+      await hasRecentDuplicateSubmission({
         ip: clientIp,
         subject: payload.subject,
         message: payload.message
@@ -70,8 +70,6 @@ router.post(
     ) {
       throw AppError.rateLimited('Please wait a few minutes before sending the same message again.');
     }
-
-    await safeLogContactSubmission(buildContactLogPreview(payload), subjectLabel);
 
     let emailResult;
 
@@ -84,26 +82,44 @@ router.post(
         message: payload.message
       });
     } catch (error) {
-      const fallbackSaved = await safeSaveFailedSubmission(sanitizedPayload, subjectLabel, error);
+      const fallbackSaved = await safeSaveFailedSubmission(payload, subjectLabel, clientIp, error);
       const requestError = error instanceof AppError ? error : AppError.upstream();
 
       if (fallbackSaved) {
-        rememberSubmission({
+        await rememberSubmission({
           ip: clientIp,
           subject: payload.subject,
           message: payload.message
         });
       }
 
+      await safeLogContactSubmission({
+        email: payload.email,
+        ip: clientIp,
+        subject: subjectLabel,
+        termsAccepted: payload.termsAccepted,
+        legalVersion: payload.legalVersion,
+        outcome: fallbackSaved ? 'delivery-failed-fallback-saved' : 'delivery-failed'
+      });
+
       requestError.fallbackSaved = fallbackSaved;
       requestError.resetCaptcha = true;
       throw requestError;
     }
 
-    rememberSubmission({
+    await rememberSubmission({
       ip: clientIp,
       subject: payload.subject,
       message: payload.message
+    });
+
+    await safeLogContactSubmission({
+      email: payload.email,
+      ip: clientIp,
+      subject: subjectLabel,
+      termsAccepted: payload.termsAccepted,
+      legalVersion: payload.legalVersion,
+      outcome: emailResult.confirmationSent ? 'accepted' : 'accepted-admin-only'
     });
 
     if (!emailResult.confirmationSent) {
@@ -130,20 +146,22 @@ function normalizeContactPayload(req, res, next) {
   next();
 }
 
-async function safeLogContactSubmission(payload, subject) {
+async function safeLogContactSubmission(payload) {
   try {
     await logContactSubmission({
-      fname: payload.fname,
-      lname: payload.lname,
       email: payload.email,
-      subject
+      ip: payload.ip,
+      subject: payload.subject,
+      outcome: payload.outcome,
+      termsAccepted: payload.termsAccepted,
+      legalVersion: payload.legalVersion
     });
   } catch (error) {
     console.error('Failed to write contact log:', error);
   }
 }
 
-async function safeSaveFailedSubmission(payload, subjectLabel, error) {
+async function safeSaveFailedSubmission(payload, subjectLabel, clientIp, error) {
   try {
     await saveFailedSubmission({
       fname: payload.fname,
@@ -152,9 +170,13 @@ async function safeSaveFailedSubmission(payload, subjectLabel, error) {
       subject: payload.subject,
       subjectLabel,
       message: payload.message,
+      ip: clientIp,
+      termsAccepted: payload.termsAccepted,
+      legalVersion: payload.legalVersion,
       failureReason: error.code || error.message || 'Unknown email delivery failure'
     });
 
+    console.warn('Encrypted fallback submission saved for manual recovery.');
     return true;
   } catch (backupError) {
     console.error('Failed to save fallback submission:', backupError);

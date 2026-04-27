@@ -8,12 +8,14 @@ const { AppError } = require('./errors');
 function getCaptchaConfig() {
   const siteKey = cleanEnvValue(env.HCAPTCHA_SITE_KEY);
   const secret = cleanEnvValue(env.HCAPTCHA_SECRET);
-  const verifyUrl = cleanEnvValue(env.HCAPTCHA_VERIFY_URL) || 'https://hcaptcha.com/siteverify';
+  const verifyUrl = cleanEnvValue(env.HCAPTCHA_VERIFY_URL) || 'https://api.hcaptcha.com/siteverify';
+  const expectedHostname = new URL(env.APP_ORIGIN).hostname;
 
   return {
     siteKey,
     secret,
     verifyUrl,
+    expectedHostname,
     isConfigured: !isPlaceholderValue(siteKey) && !isPlaceholderValue(secret)
   };
 }
@@ -28,7 +30,8 @@ async function verifyCaptchaToken({ token, remoteIp }) {
 
   const payload = new URLSearchParams({
     response: token,
-    secret: config.secret
+    secret: config.secret,
+    sitekey: config.siteKey
   });
 
   if (remoteIp) {
@@ -52,8 +55,16 @@ async function verifyCaptchaToken({ token, remoteIp }) {
     throw AppError.invalidCaptcha();
   }
 
+  const responseHostname = cleanEnvValue(response.data.hostname);
+
+  if (responseHostname && responseHostname !== config.expectedHostname) {
+    console.warn('Rejected hCaptcha verification for unexpected hostname:', responseHostname);
+    throw AppError.invalidCaptcha();
+  }
+
   return {
     success: true,
+    hostname: responseHostname,
     errorCodes: Array.isArray(response.data['error-codes']) ? response.data['error-codes'] : []
   };
 }

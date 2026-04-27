@@ -6,32 +6,34 @@ Created by **Zabdiel Dewar**
 
 ## Project Overview
 
-This repository contains the production website for Visionary Sparks, a student-led FIRST Robotics Competition team based in Halifax County, North Carolina.
+This repository contains the production website for Visionary Sparks, a school-affiliated FIRST Robotics Competition team connected to Halifax County Early College High School in Halifax County, North Carolina.
 
-The site is built as a multi-page frontend served by an Express application. It includes a protected contact form with backend validation, hCaptcha verification, rate limiting, privacy-aware logging, and centralized JSON error handling.
+The project uses a static multi-page frontend served by a Node.js + Express backend. It includes a protected contact form with server-side validation, hCaptcha verification, privacy-aware logging, encrypted recovery storage for failed deliveries, centralized JSON error handling, and public-facing legal pages.
 
-This project is designed to:
+This site is intended to:
 
 - Introduce visitors to Visionary Sparks and FRC Team 11353
-- Showcase the team, robot, and sponsor information
-- Provide a secure way for students, mentors, sponsors, and community partners to contact the team
-- Be deployable on Node.js hosts such as Render or Railway
+- Support student, sponsor, mentor, and community outreach inquiries
+- Present team, robot, sponsor, and legal information clearly
+- Be deployable on production Node.js hosts such as Render, Railway, or Fly.io
 
 ## Features
 
-- Multi-page responsive website
-- Dedicated Home, About, Robots, Sponsors, and Contact pages
+- Multi-page responsive frontend
+- Dedicated Home, About, Robots, Sponsors, Contact, Privacy, Terms, and Accessibility pages
+- Accessible HTML sponsorship packet
 - Node.js + Express backend
 - Secure contact form with server-side validation
 - hCaptcha spam protection
 - Request rate limiting
+- Restart-persistent duplicate submission protection
 - Helmet security headers and CSP
 - Compression for faster page delivery
 - Static asset caching
-- Centralized JSON error responses
-- Privacy-aware contact logging with SHA-256 email hashing
-- NDJSON backup storage for failed email deliveries
-- SEO support with canonical tags, Open Graph tags, `robots.txt`, and `sitemap.xml`
+- Centralized JSON API error responses
+- Privacy-aware contact logging with SHA-256 email and IP hashing
+- Encrypted NDJSON recovery storage for failed email deliveries
+- SEO support with canonical tags, Open Graph tags, Twitter tags, `robots.txt`, and `sitemap.xml`
 - Accessibility improvements including visible focus states and reduced-motion support
 
 ## Tech Stack
@@ -51,47 +53,56 @@ This project is designed to:
 - dotenv
 - envalid
 
-## Folder Structure
+## Project Structure
 
 ```text
 .
-├── public/
-│   ├── index.html
-│   ├── about.html
-│   ├── robots.html
-│   ├── sponsors.html
-│   ├── contact.html
-│   ├── robots.txt
-│   ├── sitemap.xml
-│   ├── css/
-│   │   └── style.css
-│   ├── js/
-│   │   └── script.js
-│   └── assets/
-│       ├── documents/
-│       ├── images/
-│       └── logos/
-├── server/
-│   ├── config/
-│   │   ├── env.js
-│   │   └── mailer.js
-│   ├── routes/
-│   │   └── contactRoutes.js
-│   ├── utils/
-│   │   ├── contactAbuseGuard.js
-│   │   ├── contactLogger.js
-│   │   ├── errors.js
-│   │   ├── hcaptcha.js
-│   │   ├── submissionBackup.js
-│   │   └── validation.js
-│   ├── data/
-│   └── logs/
-├── .env.example
-├── .gitignore
-├── package.json
-├── package-lock.json
-├── README.md
-└── server.js
+|-- public/
+|   |-- index.html
+|   |-- about.html
+|   |-- robots.html
+|   |-- sponsors.html
+|   |-- sponsorship-packet.html
+|   |-- contact.html
+|   |-- privacy.html
+|   |-- terms.html
+|   |-- accessibility.html
+|   |-- 404.html
+|   |-- robots.txt
+|   |-- sitemap.xml
+|   |-- css/
+|   |   `-- style.css
+|   |-- js/
+|   |   `-- script.js
+|   `-- assets/
+|       |-- documents/
+|       |-- images/
+|       `-- logos/
+|-- server/
+|   |-- config/
+|   |   |-- env.js
+|   |   `-- mailer.js
+|   |-- routes/
+|   |   `-- contactRoutes.js
+|   |-- utils/
+|   |   |-- contactAbuseGuard.js
+|   |   |-- contactLogger.js
+|   |   |-- errors.js
+|   |   |-- hcaptcha.js
+|   |   |-- submissionBackup.js
+|   |   `-- validation.js
+|   |-- data/
+|   `-- logs/
+|-- scripts/
+|   `-- decrypt-submissions.js
+|-- .env.example
+|-- RECORDS_RETENTION_SCHEDULE.md
+|-- SCHOOL_WEBSITE_HANDOFF_TEMPLATE.md
+|-- STUDENT_MEDIA_APPROVAL_REGISTER.csv
+|-- package.json
+|-- package-lock.json
+|-- README.md
+`-- server.js
 ```
 
 ## Important Files
@@ -100,25 +111,37 @@ This project is designed to:
   Starts the application and exits safely on fatal process-level errors.
 
 - `server/server.js`
-  Creates the Express app, configures middleware, static serving, API routes, caching, HTTPS enforcement, CORS, and global error handling.
+  Creates the Express app, configures middleware, serves static files, enforces HTTPS in production, and wires global error handling.
 
 - `server/utils/errors.js`
-  Defines the `AppError` class, `asyncHandler`, the 404 handler, and the final centralized error middleware.
+  Defines `AppError`, `asyncHandler`, the JSON error middleware, and the browser/API 404 split.
 
 - `server/routes/contactRoutes.js`
-  Handles contact submissions, validation, captcha verification, duplicate protection, rate limiting, logging, and fallback persistence.
+  Handles contact submissions, rate limiting, validation, captcha verification, duplicate detection, logging, and recovery storage.
 
 - `server/config/env.js`
-  Loads and validates environment variables using `dotenv` and `envalid`.
+  Loads and validates environment variables with `dotenv` and `envalid`.
 
 - `server/config/mailer.js`
-  Sends notification and confirmation emails using Nodemailer and Gmail SMTP.
+  Sends admin and confirmation emails with Nodemailer.
 
-- `public/contact.html`
-  Contact page and progressive-enhancement form markup.
+- `server/utils/submissionBackup.js`
+  Stores failed-email recovery records in encrypted NDJSON format.
 
-- `public/js/script.js`
-  Frontend behavior including navigation, animation helpers, hCaptcha bootstrapping, and contact form submission.
+- `scripts/decrypt-submissions.js`
+  Decrypts recovery records when manual follow-up is needed.
+
+- `public/sponsorship-packet.html`
+  Accessible HTML version of the sponsorship packet.
+
+- `RECORDS_RETENTION_SCHEDULE.md`
+  Proposed records-retention schedule for school or district review.
+
+- `SCHOOL_WEBSITE_HANDOFF_TEMPLATE.md`
+  Website ownership, approval, and launch handoff template.
+
+- `STUDENT_MEDIA_APPROVAL_REGISTER.csv`
+  Approval tracker for public student names, images, and profiles.
 
 ## Requirements
 
@@ -185,11 +208,13 @@ APP_ORIGIN=http://localhost:3000
 
 EMAIL_USER=your-team-email@gmail.com
 EMAIL_PASS=your_16_character_app_password
-EMAIL_TO=visionarysparksofficial@gmail.com
+EMAIL_TO=your_school_controlled_inbox@example.org
 
 HCAPTCHA_SITE_KEY=your_hcaptcha_site_key
 HCAPTCHA_SECRET=your_hcaptcha_secret
-HCAPTCHA_VERIFY_URL=https://hcaptcha.com/siteverify
+HCAPTCHA_VERIFY_URL=https://api.hcaptcha.com/siteverify
+
+BACKUP_ENCRYPTION_KEY=change_me_with_64_hex_chars
 ```
 
 ### 6. Start the App
@@ -220,19 +245,30 @@ http://localhost:3000
 - `EMAIL_PASS`
   Gmail App Password for `EMAIL_USER`
 
+- `EMAIL_TO`
+  School-controlled inbox or distribution list that receives contact notifications
+
 - `HCAPTCHA_SITE_KEY`
   Public site key used by the browser
 
 - `HCAPTCHA_SECRET`
   Secret key used by the backend to verify captcha responses
 
+- `BACKUP_ENCRYPTION_KEY`
+  64-character hexadecimal key used to encrypt failed-delivery recovery records at rest
+
 ### Optional
 
-- `EMAIL_TO`
-  Inbox that receives team notification emails. If not set, the app falls back to the default team inbox.
-
 - `HCAPTCHA_VERIFY_URL`
-  Verification URL for hCaptcha. The default is already correct for standard hCaptcha usage.
+  Verification URL for hCaptcha. The default should remain `https://api.hcaptcha.com/siteverify`
+
+### Generating `BACKUP_ENCRYPTION_KEY`
+
+Use Node.js to generate a secure 32-byte key in hex:
+
+```powershell
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ## Contact Form Setup
 
@@ -240,20 +276,20 @@ The contact form depends on both Gmail SMTP and hCaptcha.
 
 ### Gmail SMTP Setup
 
-1. Use a Gmail account controlled by the team
-2. Turn on 2-Step Verification for that account
-3. Generate a Gmail App Password
-4. Put the Gmail address in `EMAIL_USER`
-5. Put the App Password in `EMAIL_PASS`
-6. Set `EMAIL_TO` to the inbox that should receive team notifications
+1. Use a Gmail account controlled by the team or school-approved operator.
+2. Turn on 2-Step Verification for that account.
+3. Generate a Gmail App Password.
+4. Put the Gmail address in `EMAIL_USER`.
+5. Put the App Password in `EMAIL_PASS`.
+6. Set `EMAIL_TO` to the school-controlled inbox that should receive team notifications.
 
 ### hCaptcha Setup
 
-1. Create an hCaptcha account
-2. Create a site key and secret
-3. Add your development and production domains to the hCaptcha allowed hostnames
-4. Set `HCAPTCHA_SITE_KEY`
-5. Set `HCAPTCHA_SECRET`
+1. Create an hCaptcha account.
+2. Create a site key and secret.
+3. Add your development and production domains to the allowed hostnames.
+4. Set `HCAPTCHA_SITE_KEY`.
+5. Set `HCAPTCHA_SECRET`.
 
 ### How the Form Works
 
@@ -263,6 +299,7 @@ Frontend:
 - Fetches `/api/contact-config`
 - Renders the hCaptcha widget
 - Validates core fields in the browser
+- Requires assent to the Terms of Use and Privacy Policy
 - Sends the form to `/api/contact`
 
 Backend:
@@ -271,11 +308,12 @@ Backend:
 - Accepts either `hcaptchaToken` or the standard `h-captcha-response`
 - Applies request rate limiting
 - Validates and sanitizes fields
+- Stamps the current legal notice version server-side
 - Verifies the captcha server-side
-- Rejects recent duplicate submissions
-- Logs a privacy-safe entry with a hashed email
+- Rejects recent duplicate submissions with restart-persistent duplicate tracking
+- Logs privacy-minimized operational entries with hashed email and IP identifiers
 - Sends the email through Nodemailer
-- Saves a fallback NDJSON record if email delivery fails
+- Saves an encrypted fallback NDJSON record if email delivery fails
 
 ## API Documentation
 
@@ -321,6 +359,8 @@ Accepted fields:
 - `message`
 - `website` (honeypot field, must stay empty)
 - `hcaptchaToken`
+- `termsAccepted`
+- `legalVersion`
 
 The backend also accepts the standard hCaptcha field:
 
@@ -394,13 +434,15 @@ Async routes are wrapped with `asyncHandler` so promise rejections always flow i
 The last middleware in the app:
 
 - normalizes unexpected errors to `INTERNAL_ERROR`
-- returns JSON only
+- returns JSON for API routes
 - does not leak stack traces to users
 - returns structured `errors` arrays for validation failures
 
 ### 404 Handling
 
-Unknown routes return:
+Unknown API routes return JSON. Unknown browser page requests return the branded `public/404.html` page.
+
+API example:
 
 ```json
 {
@@ -426,15 +468,16 @@ If either happens, the process logs the failure and exits instead of continuing 
 - Strict CORS allowlist based on `APP_ORIGIN`
 - Allows no-origin requests for curl and server-to-server tooling
 - `trust proxy` enabled in production
-- HTTP to HTTPS redirect in production
+- HTTP to HTTPS redirect in production pinned to the canonical `APP_ORIGIN`
 - `express.json()` and `express.urlencoded()` request size limits
-- hCaptcha verification
+- hCaptcha verification with expected hostname checking
 - Rate limiting on contact submissions
-- Duplicate submission protection
+- Duplicate submission protection persisted to disk across restarts
 - Centralized error handling
 - No stack trace leakage in responses
 - `.env` and `.env.*` ignored by Git
-- Contact email hashing with SHA-256 in logs
+- Contact email and IP hashing with SHA-256 in logs
+- AES-256-GCM encryption for failed-email recovery records
 - Restrictive `0o600` file permissions for sensitive runtime files
 
 ## Static Asset Caching
@@ -457,8 +500,8 @@ Recommended options:
 
 ### Production Checklist
 
-1. Push the repository to GitHub
-2. Create a Node.js web service
+1. Push the repository to GitHub.
+2. Create a Node.js web service.
 3. Set the build command:
 
 ```text
@@ -481,14 +524,16 @@ npm start
 - `EMAIL_TO`
 - `HCAPTCHA_SITE_KEY`
 - `HCAPTCHA_SECRET`
+- `BACKUP_ENCRYPTION_KEY`
 
-6. Deploy the app
+6. Deploy the app.
 7. Verify:
    - page load
    - HTTPS redirect
    - contact form
    - hCaptcha
    - email delivery
+   - fallback decryption command
 
 ## Custom Domain Notes
 
@@ -514,26 +559,21 @@ Current accessibility-focused improvements include:
 - form labels
 - live regions for form status updates
 - reduced-motion support
-- semantic headings improved on the hero sections
+- accessible HTML sponsorship packet
+- browser-facing HTML 404 page
 
 Recommended ongoing checks:
 
 - test keyboard navigation on every page
 - test with a screen reader
 - verify contrast after future design changes
+- keep PDFs and new documents accessible or provide an HTML equivalent
 
-## Performance Recommendations
+## Performance Notes
 
-The backend is already using compression and static caching, but the largest performance gains will come from asset optimization.
+The backend is already using compression and static caching. The biggest remaining wins come from continued asset optimization and careful media governance.
 
-High-impact recommendations:
-
-- convert large team photos to WebP or AVIF
-- export a much smaller navbar/footer logo
-- resize oversized images before upload
-- keep the sponsorship packet optimized for download size
-
-Assets that should be reviewed first:
+Current high-impact assets to keep reviewing:
 
 - `public/assets/images/anukampa-sharma.png`
 - `public/assets/images/terleah-wright.jpeg`
@@ -544,7 +584,7 @@ Assets that should be reviewed first:
 
 ## Maintainability Notes
 
-The current static frontend works well for a small site, but there is repeated navigation and footer markup across multiple HTML pages.
+The current static frontend works well for a small site, but navigation and footer markup are still repeated across multiple HTML pages.
 
 If the site grows, a good next step would be to move repeated page chrome into partials or templates using a light server-side or build-time tool such as:
 
@@ -553,7 +593,22 @@ If the site grows, a good next step would be to move repeated page chrome into p
 - Eleventy
 - a small static site build step
 
-This is only a recommendation. The current version intentionally keeps the frontend structure simple.
+The current version intentionally keeps the frontend structure simple for a student-friendly workflow.
+
+## Records, Legal, and School Handoff Files
+
+This repository now includes:
+
+- `RECORDS_RETENTION_SCHEDULE.md`
+  Proposed records schedule for school or district review and adoption
+
+- `SCHOOL_WEBSITE_HANDOFF_TEMPLATE.md`
+  Launch and ownership handoff template
+
+- `STUDENT_MEDIA_APPROVAL_REGISTER.csv`
+  Approval tracker for student names, photos, and other public-facing profile content
+
+These files should be reviewed and completed before public launch under school or district oversight.
 
 ## Troubleshooting
 
@@ -592,6 +647,7 @@ Check:
 - `APP_ORIGIN` matches the URL you are using
 - hCaptcha is configured
 - Gmail App Password is correct
+- `EMAIL_TO` points to a real monitored inbox
 - the server is running
 - browser console and server logs for errors
 
@@ -601,7 +657,7 @@ Check:
 
 - domain allowlist in hCaptcha
 - `HCAPTCHA_SECRET`
-- the server can reach `https://hcaptcha.com/siteverify`
+- the server can reach `https://api.hcaptcha.com/siteverify`
 
 ### Email Delivery Fails
 
@@ -612,13 +668,22 @@ Check:
 - host environment variable configuration
 - SMTP/network restrictions on the hosting provider
 
+### Decrypting Recovery Backups
+
+If email delivery fails and the server writes an encrypted recovery record, set the same `BACKUP_ENCRYPTION_KEY` used by the server and run:
+
+```powershell
+$env:BACKUP_ENCRYPTION_KEY='your_64_character_hex_key'
+npm run decrypt:backup
+```
+
 ## Future Improvements
 
-- move contact rate limiting to a shared external store for horizontally scaled deployments
-- move fallback submission backups to durable hosted storage
+- move contact rate limiting and duplicate tracking to a fully shared external store for horizontally scaled deployments
+- move encrypted fallback submission backups to a school-managed durable hosted storage or ticketing workflow
 - add automated tests for the contact flow
 - add CI checks for HTML, accessibility, and security regressions
-- optimize image assets and sponsor media
+- continue optimizing image assets and sponsor media
 
 ## License
 

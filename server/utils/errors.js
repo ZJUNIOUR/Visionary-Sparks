@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('path');
+
 class AppError extends Error {
   constructor(statusCode, code, message, options = {}) {
     super(message);
@@ -59,6 +61,12 @@ function asyncHandler(fn) {
 }
 
 function notFoundHandler(req, res) {
+  if (shouldServeHtml404(req)) {
+    res.status(404);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.sendFile(path.join(__dirname, '..', '..', 'public', '404.html'));
+  }
+
   res.status(404).json({
     success: false,
     code: 'NOT_FOUND',
@@ -111,6 +119,14 @@ function normalizeError(error) {
   return new AppError(500, 'INTERNAL_ERROR', 'Internal server error', {
     expose: false
   });
+}
+
+function shouldServeHtml404(req) {
+  return (
+    req.method === 'GET' &&
+    !req.path.startsWith('/api/') &&
+    req.accepts('html')
+  );
 }
 
 module.exports = {
